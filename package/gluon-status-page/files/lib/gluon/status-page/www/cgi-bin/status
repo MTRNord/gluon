@@ -73,7 +73,7 @@ io.write("<h2>Neighbours</h2>")
 
 local interfaces = util.split(util.trim(util.exec("iw dev | egrep 'type IBSS|type mesh' -B 5 | grep Interface | cut -d' ' -f2")))
 
-if interfaces != {} then
+if interfaces ~= {} then
   for _, ifname in ipairs(interfaces) do
    io.write("<h3>" .. escape_html(ifname) .. "</h3>")
     io.write("<pre>")
