@@ -31,20 +31,13 @@ function (Helper, SignalGraph, Signal) {
   }
 
   function TableEntry(parent, nodeInfo, color, stream, mgmtBus, signal) {
-    var el = document.createElement("tr")
-    parent.appendChild(el)
+    var el = parent.insertRow()
 
-    var tdHostname = document.createElement("td")
-    var tdTQ = document.createElement("td")
-    var tdSignal = document.createElement("td")
-    var tdDistance = document.createElement("td")
-    var tdInactive = document.createElement("td")
-
-    el.appendChild(tdHostname)
-    el.appendChild(tdTQ)
-    el.appendChild(tdSignal)
-    el.appendChild(tdDistance)
-    el.appendChild(tdInactive)
+    var tdHostname = el.insertCell()
+    var tdTQ = el.insertCell()
+    var tdSignal = el.insertCell()
+    var tdDistance = el.insertCell()
+    var tdInactive = el.insertCell()
 
     var marker = document.createElement("span")
     marker.textContent = "⬤ "
@@ -69,7 +62,7 @@ function (Helper, SignalGraph, Signal) {
 
     el.destroy = function () {
       unsubscribe()
-      parent.removeChild(el)
+      parent.tBodies[0].removeChild(el)
     }
 
     return el
@@ -135,8 +128,7 @@ function (Helper, SignalGraph, Signal) {
     el.appendChild(h)
 
     var table = document.createElement("table")
-    var tr = document.createElement("tr")
-    table.appendChild(tr)
+    var tr = table.insertRow()
     table.classList.add("datatable")
 
     var th = document.createElement("th")
@@ -198,11 +190,11 @@ function (Helper, SignalGraph, Signal) {
         notUpdated.delete(id)
       }
 
-      for (id in notUpdated) {
+      notUpdated.forEach(function (id) {
         managedNeighbours[id].views.forEach( function (d) { d.destroy() })
         colors.push(managedNeighbours[id].color)
         delete managedNeighbours[id]
-      }
+      })
     }
 
 
@@ -223,6 +215,12 @@ function (Helper, SignalGraph, Signal) {
     b = Object.keys(b).sort()
 
     return !(a < b || a > b)
+  }
+
+  function getter(k) {
+    return function(obj) {
+      return obj[k]
+    }
   }
 
   return function (nodeInfo, stream, mgmtBus) {
@@ -252,9 +250,10 @@ function (Helper, SignalGraph, Signal) {
 
         remove.forEach(function (d) { div.removeChild(d) })
 
-        for (var k in d)
+        for (var k in d) {
           if (!(k in have))
-            new Interface(div, nodeInfo, k, stream.map("." + k), mgmtBus)
+            new Interface(div, nodeInfo, k, stream.map(getter(k)), mgmtBus)
+        }
       }
     }
 

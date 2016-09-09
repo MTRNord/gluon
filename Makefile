@@ -4,11 +4,16 @@ LC_ALL:=C
 LANG:=C
 export LC_ALL LANG
 
+export SHELL:=/usr/bin/env bash
+
+GLUONPATH ?= $(PATH)
+export GLUONPATH := $(GLUONPATH)
+
 empty:=
 space:= $(empty) $(empty)
 
-GLUONMAKE_EARLY = $(SUBMAKE) -C $(GLUON_ORIGOPENWRTDIR) -f $(GLUONDIR)/Makefile GLUON_TOOLS=0 QUILT=
-GLUONMAKE = $(SUBMAKE) -C $(GLUON_OPENWRTDIR) -f $(GLUONDIR)/Makefile
+GLUONMAKE_EARLY = PATH=$(GLUONPATH) $(SUBMAKE) -C $(GLUON_ORIGOPENWRTDIR) -f $(GLUONDIR)/Makefile GLUON_TOOLS=0 QUILT=
+GLUONMAKE = PATH=$(GLUONPATH) $(SUBMAKE) -C $(GLUON_OPENWRTDIR) -f $(GLUONDIR)/Makefile
 
 ifneq ($(OPENWRT_BUILD),1)
 
@@ -23,12 +28,6 @@ export TOPDIR
 update: FORCE
 	$(GLUONDIR)/scripts/update.sh
 	$(GLUONDIR)/scripts/patch.sh
-
-patch: FORCE
-	$(GLUONDIR)/scripts/patch.sh
-
-unpatch: FORCE
-	$(GLUONDIR)/scripts/unpatch.sh
 
 update-patches: FORCE
 	$(GLUONDIR)/scripts/update.sh
@@ -153,17 +152,21 @@ GLUON_$(1)_FACTORY_SUFFIX := -squashfs-factory
 GLUON_$(1)_SYSUPGRADE_SUFFIX := -squashfs-sysupgrade
 GLUON_$(1)_FACTORY_EXT := .bin
 GLUON_$(1)_SYSUPGRADE_EXT := .bin
+GLUON_$(1)_FACTORY_EXTRA :=
+GLUON_$(1)_SYSUPGRADE_EXTRA :=
 GLUON_$(1)_MODELS :=
 endef
 
 define GluonProfileFactorySuffix
 GLUON_$(1)_FACTORY_SUFFIX := $(2)
 GLUON_$(1)_FACTORY_EXT := $(3)
+GLUON_$(1)_FACTORY_EXTRA := $(4)
 endef
 
 define GluonProfileSysupgradeSuffix
 GLUON_$(1)_SYSUPGRADE_SUFFIX := $(2)
 GLUON_$(1)_SYSUPGRADE_EXT := $(3)
+GLUON_$(1)_SYSUPGRADE_EXTRA := $(4)
 endef
 
 define GluonModel
@@ -236,7 +239,7 @@ $(early_prepared_stamp):
 
 $(GLUON_OPKG_KEY): $(early_prepared_stamp) FORCE
 	[ -s $(GLUON_OPKG_KEY) -a -s $(GLUON_OPKG_KEY).pub ] || \
-		mkdir -p $$(dirname $(GLUON_OPKG_KEY)) && $(STAGING_DIR_HOST)/bin/usign -G -s $(GLUON_OPKG_KEY) -p $(GLUON_OPKG_KEY).pub -c "Gluon opkg key"
+		( mkdir -p $$(dirname $(GLUON_OPKG_KEY)) && $(STAGING_DIR_HOST)/bin/usign -G -s $(GLUON_OPKG_KEY) -p $(GLUON_OPKG_KEY).pub -c "Gluon opkg key" )
 
 $(GLUON_OPKG_KEY).pub: $(GLUON_OPKG_KEY)
 
@@ -299,7 +302,8 @@ prepare-target: $(GLUON_OPKG_KEY).pub
 $(target_prepared_stamp):
 	+$(GLUONMAKE_EARLY) prepare-target
 
-maybe-prepare-target: $(GLUON_OPKG_KEY).pub $(target_prepared_stamp)
+maybe-prepare-target: $(target_prepared_stamp)
+	+$(GLUONMAKE_EARLY) $(GLUON_OPKG_KEY).pub
 
 $(BUILD_DIR)/.prepared: Makefile
 	@mkdir -p $$(dirname $@)
@@ -338,7 +342,7 @@ prepare-image: FORCE
 	+$(SUBMAKE) -C $(TOPDIR)/target/linux/$(BOARD)/image image_prepare KDIR="$(BOARD_KDIR)"
 
 prepare: FORCE
-	@$(STAGING_DIR_HOST)/bin/lua $(GLUONDIR)/package/gluon-core/files/usr/lib/lua/gluon/site_config.lua \
+	@$(STAGING_DIR_HOST)/bin/lua $(GLUONDIR)/scripts/site_config.lua \
 		|| (echo 'Your site configuration did not pass validation.'; false)
 
 	mkdir -p $(GLUON_IMAGEDIR) $(BOARD_BUILDDIR)
@@ -445,6 +449,15 @@ image: FORCE
 		$(if $(GLUON_$(PROFILE)_FACTORY_EXT), \
 			rm -f $(GLUON_IMAGEDIR)/factory/gluon-*-$(model)$(GLUON_$(PROFILE)_FACTORY_EXT) && \
 			cp $(BIN_DIR)/gluon-$(GLUON_$(PROFILE)_MODEL_$(model))$(GLUON_$(PROFILE)_FACTORY_SUFFIX)$(GLUON_$(PROFILE)_FACTORY_EXT) $(GLUON_IMAGEDIR)/factory/$(IMAGE_PREFIX)-$(model)$(GLUON_$(PROFILE)_FACTORY_EXT) && \
+		) \
+		\
+		$(if $(GLUON_$(PROFILE)_SYSUPGRADE_EXTRA), \
+			rm -f $(GLUON_IMAGEDIR)/sysupgrade/gluon-*-$(model)-sysupgrade$(GLUON_$(PROFILE)_SYSUPGRADE_EXTRA) && \
+			cp $(BIN_DIR)/gluon$(GLUON_$(PROFILE)_SYSUPGRADE_EXTRA) $(GLUON_IMAGEDIR)/sysupgrade/$(IMAGE_PREFIX)-$(model)-sysupgrade$(GLUON_$(PROFILE)_SYSUPGRADE_EXTRA) && \
+		) \
+		$(if $(GLUON_$(PROFILE)_FACTORY_EXTRA), \
+			rm -f $(GLUON_IMAGEDIR)/factory/gluon-*-$(model)$(GLUON_$(PROFILE)_FACTORY_EXTRA) && \
+			cp $(BIN_DIR)/gluon$(GLUON_$(PROFILE)_FACTORY_EXTRA) $(GLUON_IMAGEDIR)/factory/$(IMAGE_PREFIX)-$(model)$(GLUON_$(PROFILE)_FACTORY_EXTRA) && \
 		) \
 		\
 		$(foreach alias,$(GLUON_$(PROFILE)_MODEL_$(model)_ALIASES), \

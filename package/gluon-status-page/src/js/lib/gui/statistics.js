@@ -22,28 +22,38 @@ define(["lib/helper"], function (Helper) {
     return el
   }
 
-  function mkRow(table, label, stream) {
-    var tr = document.createElement("tr")
+  function mkRow(table, label, stream, sorted) {
+
+    var i = -1
+
+    if (sorted) {
+      for (i = 0; i < table.rows.length; i++) {
+        if (label < table.rows[i].firstChild.textContent)
+           break
+      }
+    }
+
+    var tr = table.insertRow(i)
     var th = document.createElement("th")
     var td = streamElement("td", stream)
     th.textContent = label
     tr.appendChild(th)
     tr.appendChild(td)
-    table.appendChild(tr)
 
     tr.destroy = function () {
       td.destroy()
-      table.removeChild(tr)
+      table.tBodies[0].removeChild(tr)
     }
 
     return tr
   }
 
   function mkTrafficRow(table, children, label, stream, selector) {
-    var tr = document.createElement("tr")
+    var tr = table.insertRow()
     var th = document.createElement("th")
-    var td = document.createElement("td")
     th.textContent = label
+    tr.appendChild(th)
+    var td = tr.insertCell()
 
     var traffic = stream.slidingWindow(2, 2)
     var pkts = streamNode(traffic.map(deltaUptime(selector + ".packets")).map(prettyPackets))
@@ -55,10 +65,6 @@ define(["lib/helper"], function (Helper) {
     td.appendChild(bw)
     td.appendChild(document.createElement("br"))
     td.appendChild(bytes)
-
-    tr.appendChild(th)
-    tr.appendChild(td)
-    table.appendChild(tr)
 
     children.push(pkts)
     children.push(bw)
@@ -127,7 +133,7 @@ define(["lib/helper"], function (Helper) {
                                         stream.startWith(d)
                                         .map(peer.path)
                                         .filter(function (d) { return d !== undefined })
-                                        .map(prettyPeer))
+                                        .map(prettyPeer), true)
         })
       }
     })
@@ -171,28 +177,32 @@ define(["lib/helper"], function (Helper) {
   }
 
   function prettyPackets(d) {
-    var v = new Intl.NumberFormat("de-DE", {maximumFractionDigits: 0}).format(d)
+    var v = Helper.formatNumberFixed(d, 0)
     return v + " Pakete/s"
   }
 
   function prettyPrefix(prefixes, step, d) {
     var prefix = 0
 
-    while (d > step && prefix < 4) {
+    while (d > step && prefix < prefixes.length - 1) {
       d /= step
       prefix++
     }
 
-    d = new Intl.NumberFormat("de-DE", {maximumSignificantDigits: 3}).format(d)
+    d = Helper.formatNumber(d, 3)
     return d + " " + prefixes[prefix]
   }
 
+  function prettySize(d) {
+    return prettyPrefix([ "", "k", "M", "G", "T" ], 1024, d)
+  }
+
   function prettyBits(d) {
-    return prettyPrefix([ "bps", "kbps", "Mbps", "Gbps" ], 1024, d * 8)
+    return prettySize(d * 8) + "bps"
   }
 
   function prettyBytes(d) {
-    return prettyPrefix([ "B", "kB", "MB", "GB" ], 1024, d)
+    return prettySize(d) + "B"
   }
 
   function prettyUptime(seconds) {
@@ -220,11 +230,11 @@ define(["lib/helper"], function (Helper) {
   }
 
   function prettyNVRAM(usage) {
-    return new Intl.NumberFormat("de-DE", {maximumSignificantDigits: 3}).format(usage * 100) + "% belegt"
+    return Helper.formatNumber(usage * 100, 3) + "% belegt"
   }
 
   function prettyLoad(load) {
-    return new Intl.NumberFormat("de-DE", {maximumSignificantDigits: 3}).format(load)
+    return Helper.formatNumberFixed(load, 2)
   }
 
   function prettyRAM(memory) {

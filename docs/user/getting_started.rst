@@ -8,7 +8,7 @@ Gluon's releases are managed using `Git tags`_. If you are just getting
 started with Gluon we recommend to use the latest stable release of Gluon.
 
 Take a look at the `list of gluon releases`_ and notice the latest release,
-e.g. *v2014.3*. Always get Gluon using git and don't try to download it
+e.g. *v2016.1.5*. Always get Gluon using git and don't try to download it
 as a Zip archive as the archive will be missing version information.
 
 Please keep in mind that there is no "default Gluon" build; a site configuration
@@ -42,7 +42,7 @@ Building the images
 -------------------
 
 To build Gluon, first check out the repository. Replace *RELEASE* with the
-version you'd like to checkout, e.g. *v2015.1*.
+version you'd like to checkout, e.g. *v2016.1.5*.
 
 ::
 
@@ -90,12 +90,21 @@ In case of errors read the messages carefully and try to fix the stated issues (
 ``ar71xx-generic`` is the most common target and will generate images for most of the supported hardware.
 To see a complete list of supported targets, call ``make`` without setting ``GLUON_TARGET``.
 
-The built images can be found in the directory `output/images`. Of these, the factory
+You should reserve about 10GB of disk space for each `GLUON_TARGET`.
+
+The built images can be found in the directory `output/images`. Of these, the `factory`
 images are to be used when flashing from the original firmware a device came with,
-and sysupgrade is to upgrade from other versions of Gluon or any other OpenWRT-based
+and `sysupgrade` is to upgrade from other versions of Gluon or any other OpenWrt-based
 system.
 
-You should reserve about 10GB of disk space for each `GLUON_TARGET`.
+**Note:** The images for some models are identical; to save disk space, symlinks are generated instead
+of multiple copies of the same image. If your webserver's configuration prohibits following
+symlinks, you can use the following command to resolve these links while copying the images::
+
+    cp -rL output/images /var/www
+
+Cleaning the build tree
+.......................
 
 There are two levels of `make clean`::
 
@@ -121,7 +130,7 @@ not support IPv6.
 
 This is not true for kernel modules; the Gluon kernel is incompatible with the
 kernel of the default OpenWrt images. Therefore, Gluon will not only generate images,
-but also an opkg repositoy containing all kernel modules provided by OpenWrt/Gluon
+but also an opkg repository containing all kernel modules provided by OpenWrt/Gluon
 for the kernel of the generated images.
 
 Signing keys
@@ -147,7 +156,8 @@ at the configured location without doing a full build, use ``make create-key``.
 Environment variables
 ---------------------
 
-Gluon's build process can be controlled by various environment variables.
+Gluon's build process can be controlled by various environment variables. These variables can
+usually be set on the command line or in ``site.mk``.
 
 GLUON_SITEDIR
   Path to the site configuration. Defaults to ``site``.
@@ -168,6 +178,14 @@ GLUON_IMAGEDIR
 
 GLUON_MODULEDIR
   Path where the kernel module opkg repository will be stored. Defaults to ``$(GLUON_OUTPUTDIR)/modules``.
+
+GLUON_ATH10K_MESH
+  While Gluon does support some hardware with ath10k-based 5GHz WLAN, these WLAN adapters don't work
+  well for meshing at the moment, so building images for these models is disabled by default. In addition,
+  ath10k can't support IBSS and 11s meshing in the same image due to WLAN firmware restrictions.
+
+  Setting GLUON_ATH10K_MESH to ``11s`` or ``ibss`` will enable generation of images for ath10k devices
+  and install the firmware for the corresponding WLAN mode.
 
 
 So all in all, to update and rebuild a Gluon build tree, the following commands should be used (repeat the

@@ -24,9 +24,10 @@ Features
 
    features/configmode
    features/autoupdater
+   features/wlan-configuration
    features/private-wlan
    features/wired-mesh
-   features/announce
+   features/monitoring
    features/authorized-keys
    features/roles
 
@@ -42,6 +43,7 @@ Developer Documentation
    dev/configmode
    dev/wan
    dev/i18n
+   dev/mac_addresses
 
 Packages
 --------
@@ -50,8 +52,11 @@ Packages
    :maxdepth: 1
 
    package/gluon-client-bridge
+   package/gluon-config-mode-contact-info
+   package/gluon-config-mode-geo-location
    package/gluon-ebtables-filter-multicast
    package/gluon-ebtables-filter-ra-dhcp
+   package/gluon-ebtables-segment-mld
 
 Releases
 --------
@@ -59,7 +64,12 @@ Releases
 .. toctree::
    :maxdepth: 1
 
-   releases/v2015.2
+   releases/v2016.1.5
+   releases/v2016.1.4
+   releases/v2016.1.3
+   releases/v2016.1.2
+   releases/v2016.1.1
+   releases/v2016.1
    releases/v2015.1.2
    releases/v2015.1.1
    releases/v2015.1
@@ -74,6 +84,19 @@ Supported Devices & Architectures
 ar71xx-generic
 ^^^^^^^^^^^^^^
 
+* 8devices
+
+  - Carambola 2
+
+* ALFA Network
+
+  - AP121
+  - AP121U
+  - Hornet-UB
+  - Tube2H
+  - N2
+  - N5
+
 * Allnet
 
   - ALL0315N
@@ -81,13 +104,19 @@ ar71xx-generic
 * Buffalo
 
   - WZR-HP-AG300H / WZR-600DHP
-  - WZR-HP-G300N
+  - WZR-HP-G300NH
   - WZR-HP-G450H
+
+* Cisco Meraki
+
+  - MR12 / MR62
+  - MR16 / MR66
 
 * D-Link
 
-  - DIR-825 (B1)
+  - DIR-505 (A1, A2)
   - DIR-615 (C1)
+  - DIR-825 (B1)
 
 * GL-Inet
 
@@ -104,18 +133,34 @@ ar71xx-generic
   - WNDR3800
   - WNDRMAC (v2)
 
+* Onion
+
+  - Omega
+
+* OpenMesh
+
+  - MR600 (v1, v2)
+  - MR900 (v1, v2)
+  - OM2P (v1, v2)
+  - OM2P-HS (v1, v2, v3)
+  - OM2P-LC
+  - OM5P
+  - OM5P-AN
+
 * TP-Link
 
   - CPE210 (v1.0, v1.1)
   - CPE220 (v1.0, v1.1)
   - CPE510 (v1.0, v1.1)
   - CPE520 (v1.0, v1.1)
+  - TL-MR13U (v1)
   - TL-MR3020 (v1)
   - TL-MR3040 (v1, v2)
   - TL-MR3220 (v1, v2)
   - TL-MR3420 (v1, v2)
   - TL-WA701N/ND (v1, v2)
   - TL-WA750RE (v1)
+  - TL-WA7510N (v1)
   - TL-WA801N/ND (v1, v2)
   - TL-WA830RE (v1, v2)
   - TL-WA850RE (v1)
@@ -130,8 +175,9 @@ ar71xx-generic
   - TL-WR741N/ND (v1, v2, v4, v5)
   - TL-WR743N/ND (v1, v2)
   - TL-WR801N/ND (v1, v2)
-  - TL-WR841N/ND (v3, v5, v7, v8, v9, v10)
+  - TL-WR841N/ND (v3, v5, v7, v8, v9, v10, v11)
   - TL-WR842N/ND (v1, v2)
+  - TL-WR843N/ND (v1)
   - TL-WR940N (v1, v2, v3)
   - TL-WR941ND (v2, v3, v4, v5, v6)
   - TL-WR1043N/ND (v1, v2, v3)
@@ -140,15 +186,19 @@ ar71xx-generic
 * Ubiquiti
 
   - Air Gateway
+  - Air Router
   - Bullet M
+  - Loco M
+  - Loco M XW
   - Nanostation M
   - Nanostation M XW
-  - Loco M XW
   - Picostation M
   - Rocket M
+  - Rocket M XW
   - UniFi AP
   - UniFi AP Pro
   - UniFi AP Outdoor
+  - UniFi AP Outdoor+
 
 * Western Digital
 

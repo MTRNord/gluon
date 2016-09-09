@@ -19,7 +19,7 @@ Configuration
 ~~~~~~~~~~~~~
 
 Both Mesh-on-WAN and Mesh-on-LAN can be configured on the "Network" page
-of the *Expert Mode* (if the package ``gluon-luci-portconfig`` is installed).
+of the *Advanced settings* (if the package ``gluon-luci-portconfig`` is installed).
 
 It is also possible to enable Mesh-on-WAN and Mesh-on-LAN by default by
 adding ``mesh_on_wan = true`` and ``mesh_on_lan = true`` to ``site.conf``.
@@ -60,6 +60,6 @@ It may be disabled by running::
   done
   uci commit
 
-Please note that this configuration has changed in Gluon v2015.2. Using
-the old commands on v2015.2 will break the corresponding Export Mode
-settings.
+Please note that this configuration has changed in Gluon v2016.1. Using
+the old commands on v2016.1 will break the corresponding options in the
+*Advanced settings*.
