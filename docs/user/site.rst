@@ -21,11 +21,13 @@ site_code
     The code of your community. It is good practice to use the TLD of
     your community here.
 
-prefix4
+prefix4 \: optional
     The IPv4 Subnet of your community mesh network in CIDR notation, e.g.
     ::
 
        prefix4 = '10.111.111.0/18'
+
+    Required if ``next_node.ip4`` is set.
 
 prefix6
     The IPv6 subnet of your community mesh network, e.g.
@@ -44,7 +46,7 @@ ntp_server
     List of NTP servers available in your community or used by your community, e.g.:
     ::
 
-       ntp_servers = {'1.ntp.services.ffeh','2.ntp.services.ffeh'}
+       ntp_servers = {'1.ntp.services.ffac','2.ntp.services.ffac'}
 
     This NTP servers must be reachable via IPv6 from the nodes. If you don't want to set an IPv6 address
     explicitly, but use a hostname (which is recommended), see also the :ref:`FAQ <faq-dns>`.
@@ -60,9 +62,9 @@ opkg \: optional
     ::
 
       opkg = {
-        openwrt = 'http://opkg.services.ffeh/openwrt/%n/%v/%S/packages',
+        openwrt = 'http://opkg.services.ffac/openwrt/%n/%v/%S/packages',
         extra = {
-          modules = 'http://opkg.services.ffeh/modules/gluon-%GS-%GR/%S',
+          modules = 'http://opkg.services.ffac/modules/gluon-%GS-%GR/%S',
         },
       }
 
@@ -81,7 +83,7 @@ regdom \: optional
 
       regdom = 'DE'
 
-    Setting ``regdom`` in mandatory if ``wifi24`` or ``wifi5`` is defined.
+    Setting ``regdom`` is mandatory if ``wifi24`` or ``wifi5`` is defined.
 
 wifi24 \: optional
     WLAN configuration for 2.4 GHz devices.
@@ -96,7 +98,7 @@ wifi24 \: optional
 
     Each interface may be disabled by setting ``disabled`` to ``true``.
     This will only affect new installations.
-    Upgrades will not changed the disabled state.
+    Upgrades will not change the disabled state.
 
     Additionally it is possible to configure the ``supported_rates`` and ``basic_rate``
     of each radio. Both are optional, by default hostapd/driver dictate the rates.
@@ -113,7 +115,8 @@ wifi24 \: optional
     An optional parameter ``vlan`` (integer) is supported.
 
     Both ``mesh`` and ``ibss`` accept an optional ``mcast_rate`` (kbit/s) parameter for
-    setting the default multicast datarate.
+    setting the multicast bitrate. Increasing the default value of 1000 to something
+    like 12000 is recommended.
     ::
 
        wifi24 = {
@@ -121,10 +124,10 @@ wifi24 \: optional
          supported_rates = {6000, 9000, 12000, 18000, 24000, 36000, 48000, 54000},
          basic_rate = {6000, 9000, 18000, 36000, 54000},
          ap = {
-           ssid = 'entenhausen.freifunk.net',
+           ssid = 'alpha-centauri.freifunk.net',
          },
          mesh = {
-           id = 'entenhausen-mesh',
+           id = 'alpha-centauri-mesh',
            mcast_rate = 12000,
          },
          ibss = {
@@ -146,6 +149,8 @@ next_node \: package
         ip6 = 'fdca:ffee:babe:1::1',
         mac = 'ca:ff:ee:ba:be:00'
       }
+
+    The IPv4 next-node address is optional.
 
 mesh \: optional
     Options specific to routing protocols.
@@ -178,12 +183,15 @@ fastd_mesh_vpn
     In any case, the ``null`` method should always be the first method in the list
     if it is supported at all. You should only set `configurable` to `true` if the
     configured peers support both the ``null`` method and methods with encryption.
+
+    You can set syslog_level from verbose (default) to warn to reduce syslog output.
     ::
 
       fastd_mesh_vpn = {
         methods = {'salsa2012+umac'},
       	-- enabled = true,
       	-- configurable = true,
+	-- syslog_level = 'warn',
         mtu = 1280,
         groups = {
           backbone = {
@@ -194,14 +202,14 @@ fastd_mesh_vpn
                 key = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
                 -- Having multiple domains prevents SPOF in freifunk.net
                 remotes = {
-                  'ipv4 "vpn1.entenhausen.freifunk.net" port 10000',
-                  'ipv4 "vpn1.entenhausener-freifunk.de" port 10000',
+                  'ipv4 "vpn1.alpha-centauri.freifunk.net" port 10000',
+                  'ipv4 "vpn1.alpha-centauri-freifunk.de" port 10000',
                 },
               },
               peer2 = {
                 key = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
                 -- You can also omit the ipv4 to allow both connection via ipv4 and ipv6
-                remotes = {'"vpn2.entenhausen.freifunk.net" port 10000'},
+                remotes = {'"vpn2.alpha-centauri.freifunk.net" port 10000'},
               },
             },
             -- Optional: nested peer groups
@@ -254,7 +262,7 @@ autoupdater \: package
             name = 'stable',
             mirrors = {
               'http://[fdca:ffee:babe:1::fec1]/firmware/stable/sysupgrade/',
-              'http://autoupdate.entenhausen.freifunk.net/firmware/stable/sysupgrade/',
+              'http://autoupdate.alpha-centauri.freifunk.net/firmware/stable/sysupgrade/',
             },
             -- Number of good signatures required
             good_signatures = 2,
@@ -278,7 +286,7 @@ roles \: optional
     part of ``list``. If you want node owners to change the role via config mode add
     the package ``gluon-luci-node-role`` to ``site.mk``.
 
-    The strings to display in the LuCI interface can be configured per language in the
+    The strings to display in the LuCI interface are configured per language in the
     ``i18n/en.po``, ``i18n/de.po``, etc. files of the site repository using message IDs like
     ``gluon-luci-node-role:role:node`` and ``gluon-luci-node-role:role:backbone``.
     ::
@@ -309,9 +317,9 @@ legacy \: package
 
       legacy = {
              version_files = {'/etc/.freifunk_version_keep', '/etc/.eff_version_keep'},
-             old_files = {'/etc/config/config_mode', '/etc/config/ffeh', '/etc/config/freifunk'},
-             config_mode_configs = {'config_mode', 'ffeh', 'freifunk'},
-             fastd_configs = {'ffeh_mesh_vpn', 'mesh_vpn'},
+             old_files = {'/etc/config/config_mode', '/etc/config/ffac', '/etc/config/freifunk'},
+             config_mode_configs = {'config_mode', 'ffac', 'freifunk'},
+             fastd_configs = {'ffac_mesh_vpn', 'mesh_vpn'},
              mesh_ifname = 'freifunk',
              tc_configs = {'ffki', 'freifunk'},
              wifi_names = {'wifi_freifunk', 'wifi_freifunk5', 'wifi_mesh', 'wifi_mesh5'},
@@ -355,6 +363,12 @@ gluon-config-mode:welcome
 
 gluon-config-mode:pubkey
     Information about the public VPN key on the reboot page.
+
+gluon-config-mode:altitude-label
+    Label for the ``altitude`` field
+
+gluon-config-mode:altitude-help
+    Description for the usage of the ``altitude`` field
 
 gluon-config-mode:reboot
     General information shown on the reboot page.
@@ -465,7 +479,7 @@ This is a non-exhaustive list of site-repos from various communities:
 * `site-ffhl <https://github.com/freifunk-luebeck/site-ffhl>`_ (Lübeck)
 * `site-fflg <https://github.com/kartenkarsten/site-fflg>`_ (Lüneburg)
 * `site-ffmd <https://github.com/FreifunkMD/site-ffmd>`_ (Magdeburg)
-* `site-ffmwu <https://github.com/freifunk-mwu/site-ffmwu>`_ (Mainz, Wiesbaden & Umgebung)
+* `site-ffmwu <https://github.com/freifunk-mwu/sites-ffmwu>`_ (Mainz, Wiesbaden & Umgebung)
 * `site-ffmyk <https://github.com/FreifunkMYK/site-ffmyk>`_ (Mayen-Koblenz)
 * `site-ffmo <https://github.com/ffruhr/site-ffmo>`_ (Moers)
 * `site-ffmg <https://github.com/ffruhr/site-ffmg>`_ (Mönchengladbach)
@@ -476,6 +490,7 @@ This is a non-exhaustive list of site-repos from various communities:
 * `site-ffniers <https://github.com/ffruhr/site-ffniers>`_ (Niersufer)
 * `site-ffnw <https://git.nordwest.freifunk.net/ffnw-firmware/siteconf/tree/master>`_ (Nordwest)
 * `site-ffrgb <https://github.com/ffrgb/site-ffrgb>`_ (Regensburg)
+* `site-ffrn <https://github.com/Freifunk-Rhein-Neckar/site-ffrn>`_ (Rhein-Neckar)
 * `site-ffruhr <https://github.com/ffruhr?utf8=✓&query=site>`_ (Ruhrgebiet, Multi-Communities)
 * `site-ffs <https://github.com/freifunk-stuttgart/site-ffs>`_ (Stuttgart)
 * `site-fftr <https://github.com/freifunktrier/site-fftr>`_ (Trier)
